@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Universal Library - Reels Style</title>
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Reels Reader">
     <meta name="theme-color" content="#FDF6E3">
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
@@ -25,39 +26,80 @@
             --bg-color: #FDF6E3;
             --text-color: #314046;
             --bg-behind: #E9E1D3;
-            --accent-color: #FF9F1C; 
+            --accent-color: #FF9F1C;
         }
 
-        body, html {
-            margin: 0; padding: 0; height: 100dvh; width: 100%;
-            background-color: var(--bg-behind); color: var(--text-color);
-            font-family: 'Nunito', sans-serif; overflow: hidden;
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100dvh;
+            width: 100%;
+            background-color: var(--bg-behind);
+            color: var(--text-color);
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
         }
 
         #app-container {
-            display: flex; flex-direction: column; height: 100dvh; width: 100vw;
-            justify-content: center; align-items: center; position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            width: 100vw;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
 
         #top-ui {
-            position: absolute; top: 0; left: 0; width: 100%; z-index: 30;
-            display: none; flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 30;
+            display: none;
+            flex-direction: column;
         }
-        #progress-container { width: 100%; height: 6px; background-color: rgba(0,0,0,0.1); }
-        #progress-bar { height: 100%; width: 0%; background-color: var(--accent-color); transition: width 0.3s ease; }
-        
-        #nav-buttons { display: flex; justify-content: space-between; padding: 15px 10px; gap: 8px; }
-        
+
+        #progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        #nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 10px;
+            gap: 8px;
+        }
+
         .ui-btn {
-            background: rgba(0,0,0,0.08); border: none; padding: 8px 10px;
-            border-radius: 20px; color: var(--text-color); font-family: 'Nunito', sans-serif;
-            font-weight: 700; cursor: pointer; backdrop-filter: blur(5px); flex-grow: 1; text-align: center;
+            background: rgba(0, 0, 0, 0.08);
+            border: none;
+            padding: 8px 10px;
+            border-radius: 20px;
+            color: var(--text-color);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            flex-grow: 1;
+            text-align: center;
         }
 
         /* --- NOU: Indicatorul de Reel/Pagină --- */
         #reel-counter {
             position: absolute;
-            bottom: 25px; /* Stă perfect deasupra zonei bannerului tău */
+            bottom: 25px;
+            /* Stă perfect deasupra zonei bannerului tău */
             left: 50%;
             transform: translateX(-50%);
             z-index: 35;
@@ -70,74 +112,247 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            display: none; /* Ascuns până se încarcă cartea */
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+            /* Ascuns până se încarcă cartea */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        #upload-screen { 
-            display: flex; flex-direction: column; align-items: center; gap: 15px; 
-            z-index: 10; text-align: center; padding: 20px; width: 100%; max-width: 400px;
+        #upload-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
             box-sizing: border-box;
         }
-        
-        .upload-box { background: rgba(255,255,255,0.5); padding: 20px; border-radius: 15px; width: 100%; box-sizing: border-box; }
-        input[type="file"] { width: 100%; padding: 10px; background: #ffffff; border-radius: 8px; color: var(--text-color); border: 2px solid #ccc; cursor: pointer; font-family: 'Nunito', sans-serif; box-sizing: border-box; }
-        
-        .search-box { display: flex; gap: 5px; width: 100%; margin-top: 10px;}
-        .search-box input { flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: 'Nunito', sans-serif;}
-        .search-box button { padding: 10px 15px; background: var(--text-color); color: var(--bg-color); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .upload-box {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: 8px;
+            color: var(--text-color);
+            border: 2px solid #ccc;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .search-box input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .search-box button {
+            padding: 10px 15px;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
         #online-results {
-            list-style: none; padding: 0; margin: 10px 0 0 0; max-height: 200px; overflow-y: auto;
-            background: #fff; border-radius: 8px; width: 100%; text-align: left;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 8px;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        #online-results li { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
-        #online-results li:hover { background: #f9f9f9; }
-        #online-results li small { display: block; color: #777; }
-        
+
+        #online-results li {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #online-results li:hover {
+            background: #f9f9f9;
+        }
+
+        #online-results li small {
+            display: block;
+            color: #777;
+        }
+
         #loading-overlay {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            background: var(--bg-color); z-index: 50; display: none;
-            flex-direction: column; justify-content: center; align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
         #reader-container {
-            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
-            display: none; background-color: var(--bg-color); transform: translateY(0);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            background-color: var(--bg-color);
+            transform: translateY(0);
         }
-        #epub-viewer { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: none; }
-        
-        #pdf-viewer { 
-            width: 100%; height: 100%; position: absolute; top: 0; left: 0; 
-            display: none; overflow-y: auto; overflow-x: hidden;
-            background-color: #525659; display: flex; justify-content: center; align-items: flex-start; 
-            padding-top: 60px; padding-bottom: 80px; box-sizing: border-box; 
+
+        #epub-viewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
         }
-        #pdf-canvas { max-width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        #pdf-viewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: #525659;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 60px;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+        }
+
+        #pdf-canvas {
+            max-width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
 
         .modal-bottom {
-            position: absolute; bottom: -100%; left: 0; width: 100%; height: 75vh;
-            background-color: var(--bg-color); z-index: 40; border-radius: 20px 20px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1); transition: bottom 0.3s ease; display: flex; flex-direction: column;
+            position: absolute;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 75vh;
+            background-color: var(--bg-color);
+            z-index: 40;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); }
-        .modal-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; }
-        .modal-list li { padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; line-height: 1.4; }
-        
-        #book-search-container { display: flex; padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.1); gap: 10px; }
-        #book-search-input { flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.2); font-family: 'Nunito', sans-serif; background: transparent; color: var(--text-color); }
-        #do-book-search-btn { padding: 10px 15px; background: var(--text-color); color: var(--bg-color); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .modal-list li {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        #book-search-container {
+            display: flex;
+            padding: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            gap: 10px;
+        }
+
+        #book-search-input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            font-family: 'Nunito', sans-serif;
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        #do-book-search-btn {
+            padding: 10px 15px;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
         @media (max-width: 400px) {
-            .ui-btn { padding: 8px 5px; font-size: 12px; }
-            #nav-buttons { gap: 5px; padding: 10px 5px; }
-            .upload-box { padding: 15px; }
-            h2 { font-size: 20px; }
-            .search-box button { padding: 10px; font-size: 14px; }
+            .ui-btn {
+                padding: 8px 5px;
+                font-size: 12px;
+            }
+
+            #nav-buttons {
+                gap: 5px;
+                padding: 10px 5px;
+            }
+
+            .upload-box {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .search-box button {
+                padding: 10px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div id="app-container">
@@ -163,7 +378,9 @@
         </div>
 
         <div id="top-ui">
-            <div id="progress-container"><div id="progress-bar"></div></div>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
             <div id="nav-buttons">
                 <button class="ui-btn" id="btn-toc" style="display:none;">☰ Capitole</button>
                 <button class="ui-btn" id="btn-search" style="display:none;">🔍 Caută</button>
@@ -208,21 +425,21 @@
         const topUI = document.getElementById('top-ui');
         const progressBar = document.getElementById('progress-bar');
         const reelCounter = document.getElementById('reel-counter'); // Am extras referința
-        
+
         const btnToc = document.getElementById('btn-toc');
         const btnSearch = document.getElementById('btn-search');
-        
+
         const tocModal = document.getElementById('toc-modal');
         const searchModal = document.getElementById('search-modal');
-        
+
         const loadingOverlay = document.getElementById('loading-overlay');
         const libSearchInput = document.getElementById('lib-search-input');
         const libSearchBtn = document.getElementById('lib-search-btn');
         const onlineResults = document.getElementById('online-results');
 
-        let currentMode = null; 
+        let currentMode = null;
         let isAnimating = false;
-        
+
         let book, rendition;
         let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumPending = null;
         const canvas = document.getElementById('pdf-canvas');
@@ -233,8 +450,8 @@
 
         function handleSwipeAction(startY, endY) {
             const swipeDistance = startY - endY;
-            if (swipeDistance > 50) turnPageWithAnimation('next'); 
-            else if (swipeDistance < -50) turnPageWithAnimation('prev'); 
+            if (swipeDistance > 50) turnPageWithAnimation('next');
+            else if (swipeDistance < -50) turnPageWithAnimation('prev');
         }
 
         // --- CĂUTARE ÎN BIBLIOTECĂ ---
@@ -247,9 +464,9 @@
             try {
                 const res = await fetch(`https://gutendex.com/books/?search=${encodeURIComponent(query)}`);
                 const data = await res.json();
-                
+
                 onlineResults.innerHTML = '';
-                
+
                 if (data.results.length === 0) {
                     onlineResults.innerHTML = '<li>Nu am găsit nicio carte cu acest nume.</li>';
                     return;
@@ -265,7 +482,7 @@
                     const epubUrl = b.formats['application/epub+zip'];
                     const li = document.createElement('li');
                     const authors = b.authors.map(a => a.name).join(', ');
-                    
+
                     li.innerHTML = `<strong>${b.title}</strong><small>${authors}</small>`;
                     li.onclick = () => downloadOnlineBook(epubUrl, b.title);
                     onlineResults.appendChild(li);
@@ -276,27 +493,27 @@
             }
         };
 
-        libSearchInput.addEventListener("keypress", function(event) {
+        libSearchInput.addEventListener("keypress", function (event) {
             if (event.key === "Enter") { event.preventDefault(); libSearchBtn.click(); }
         });
 
         async function downloadOnlineBook(url, title) {
             uploadScreen.style.display = 'none';
-            loadingOverlay.style.display = 'flex'; 
-            
+            loadingOverlay.style.display = 'flex';
+
             const loadingText = document.getElementById('loading-text');
             loadingText.innerHTML = `Se descarcă "${title}"...`;
 
             try {
                 const proxyUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`;
                 const response = await fetch(proxyUrl);
-                
+
                 if (!response.ok) throw new Error("Proxy-ul a cedat din cauza mărimii fișierului.");
 
                 const arrayBuffer = await response.arrayBuffer();
                 currentMode = 'epub';
-                loadingOverlay.style.display = 'none'; 
-                
+                loadingOverlay.style.display = 'none';
+
                 initEpubMode(arrayBuffer);
 
             } catch (error) {
@@ -328,14 +545,14 @@
                     return item.load(book.load.bind(book)).then(() => {
                         return item.find(query);
                     }).finally(() => {
-                        item.unload(); 
+                        item.unload();
                     });
                 });
 
                 const resultsArray = await Promise.all(searchPromises);
                 const mergedResults = [].concat.apply([], resultsArray);
 
-                bookSearchResults.innerHTML = ''; 
+                bookSearchResults.innerHTML = '';
 
                 if (mergedResults.length === 0) {
                     bookSearchResults.innerHTML = '<li>Nu a fost găsit niciun rezultat.</li>';
@@ -346,10 +563,10 @@
                     const li = document.createElement('li');
                     const excerptBold = res.excerpt.replace(new RegExp(`(${query})`, "gi"), "<b>$1</b>");
                     li.innerHTML = `... ${excerptBold} ...`;
-                    
+
                     li.onclick = () => {
-                        rendition.display(res.cfi); 
-                        searchModal.style.bottom = "-100%"; 
+                        rendition.display(res.cfi);
+                        searchModal.style.bottom = "-100%";
                     };
                     bookSearchResults.appendChild(li);
                 });
@@ -359,12 +576,12 @@
             }
         };
 
-        bookSearchInput.addEventListener("keypress", function(event) {
+        bookSearchInput.addEventListener("keypress", function (event) {
             if (event.key === "Enter") { event.preventDefault(); doBookSearchBtn.click(); }
         });
 
         // --- INIȚIALIZARE VIEWER ---
-        fileUpload.addEventListener('change', function(e) {
+        fileUpload.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (!file) return;
 
@@ -393,10 +610,10 @@
             readerContainer.style.display = 'block';
             topUI.style.display = 'flex';
             reelCounter.style.display = 'block'; // Afișăm butonul nostru
-            
+
             btnToc.style.display = isEpub ? 'block' : 'none';
             btnSearch.style.display = isEpub ? 'block' : 'none';
-            
+
             progressBar.style.width = '0%';
             reelCounter.innerText = "Se calculează...";
         }
@@ -409,26 +626,32 @@
                     const pct = book.locations.percentageFromCfi(currentLocation.start.cfi);
                     progressBar.style.width = Math.round(pct * 100) + '%';
 
-                    // Actualizăm textul butonului
+                    // Reparăm eroarea: folosim .total sau .length (fără paranteze)
                     const currentLoc = book.locations.locationFromCfi(currentLocation.start.cfi);
-                    const totalLocs = book.locations.length();
-                    reelCounter.innerText = `Reel ${currentLoc} / ${totalLocs}`;
+                    const totalLocs = book.locations.total || book.locations.length;
+
+                    // Ne asigurăm că arată corect chiar și la prima secundă de încărcare
+                    if (currentLoc > 0) {
+                        reelCounter.innerText = `Reel ${currentLoc} / ${totalLocs}`;
+                    } else {
+                        reelCounter.innerText = `Reel 1 / ${totalLocs}`;
+                    }
                 }
             }
         }
 
         // --- LOGICA DE "SĂRIT" (JUMP) LA CLICK ---
         reelCounter.onclick = () => {
-            let maxVal = currentMode === 'epub' ? (book.locations ? book.locations.length() : 0) : pdfDoc.numPages;
+            // Reparăm și aici parantezele de la length()
+            let maxVal = currentMode === 'epub' ? (book.locations ? (book.locations.total || book.locations.length) : 0) : pdfDoc.numPages;
             if (maxVal === 0) return; // Încă se calculează
 
             let target = prompt(`La ce număr vrei să sari? (1 - ${maxVal})`);
-            
+
             if (target !== null && target.trim() !== "" && !isNaN(target)) {
                 target = parseInt(target);
                 if (target >= 1 && target <= maxVal) {
                     if (currentMode === 'epub') {
-                        // Extragem CFI-ul invizibil asociat acelui număr și ne teleportăm
                         const targetCfi = book.locations.cfiFromLocation(target);
                         rendition.display(targetCfi);
                     } else if (currentMode === 'pdf') {
@@ -442,7 +665,7 @@
         };
 
         function initEpubMode(bookData) {
-            showReaderUI(true); 
+            showReaderUI(true);
             epubViewer.style.display = 'block';
             pdfViewer.style.display = 'none';
 
@@ -453,7 +676,7 @@
                 allowScriptedContent: true
             });
 
-            rendition.hooks.content.register(function(contents) {
+            rendition.hooks.content.register(function (contents) {
                 contents.addStylesheet("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap");
             });
 
@@ -462,37 +685,37 @@
             const dynamicMarginTop = isSmallScreen ? "5vh !important" : "10vh !important";
 
             rendition.themes.default({
-                "body": { 
-                    "background": "#FDF6E3 !important", 
-                    "color": "#314046 !important", 
-                    "padding": "80px 20px 80px 20px !important", 
-                    "margin": "0 !important" 
+                "body": {
+                    "background": "#FDF6E3 !important",
+                    "color": "#314046 !important",
+                    "padding": "80px 20px 80px 20px !important",
+                    "margin": "0 !important"
                 },
-                "p": { 
-                    "font-family": "'Nunito', sans-serif !important", 
-                    "font-size": dynamicFontSize, 
-                    "line-height": "1.6 !important", 
+                "p": {
+                    "font-family": "'Nunito', sans-serif !important",
+                    "font-size": dynamicFontSize,
+                    "line-height": "1.6 !important",
                     "display": "block !important",
-                    "margin-top": dynamicMarginTop, 
-                    "margin-bottom": "15vh !important", 
-                    "break-after": "column !important", 
-                    "page-break-after": "always !important" 
+                    "margin-top": dynamicMarginTop,
+                    "margin-bottom": "15vh !important",
+                    "break-after": "column !important",
+                    "page-break-after": "always !important"
                 },
-                "h1, h2, h3": { 
-                    "font-family": "'Nunito', sans-serif !important", 
+                "h1, h2, h3": {
+                    "font-family": "'Nunito', sans-serif !important",
                     "display": "block !important",
-                    "margin-top": "15vh !important", 
+                    "margin-top": "15vh !important",
                     "margin-bottom": "10vh !important",
-                    "break-after": "column !important" 
+                    "break-after": "column !important"
                 }
             });
 
             book.ready.then(() => book.locations.generate(1600)).then(() => updateEpubProgress());
 
-            book.loaded.navigation.then(function(toc) {
+            book.loaded.navigation.then(function (toc) {
                 const tocList = document.getElementById('toc-list');
-                tocList.innerHTML = ''; 
-                toc.forEach(function(chapter) {
+                tocList.innerHTML = '';
+                toc.forEach(function (chapter) {
                     const li = document.createElement('li');
                     li.textContent = chapter.label;
                     li.onclick = () => { rendition.display(chapter.href); tocModal.style.bottom = "-100%"; };
@@ -501,17 +724,17 @@
             });
 
             rendition.display();
-            rendition.on('relocated', function() { updateEpubProgress(); });
+            rendition.on('relocated', function () { updateEpubProgress(); });
 
-            rendition.on('touchstart', function(event) { touchStartY = event.changedTouches[0].screenY; });
-            rendition.on('touchend', function(event) {
+            rendition.on('touchstart', function (event) { touchStartY = event.changedTouches[0].screenY; });
+            rendition.on('touchend', function (event) {
                 touchEndY = event.changedTouches[0].screenY;
-                handleSwipeAction(touchStartY, touchEndY); 
+                handleSwipeAction(touchStartY, touchEndY);
             });
         }
 
         function initPdfMode(typedarray) {
-            showReaderUI(false); 
+            showReaderUI(false);
             epubViewer.style.display = 'none';
             pdfViewer.style.display = 'flex';
 
@@ -525,7 +748,7 @@
         function renderPdfPage(num) {
             pageIsRendering = true;
             pdfDoc.getPage(num).then(page => {
-                const containerWidth = pdfViewer.clientWidth - 20; 
+                const containerWidth = pdfViewer.clientWidth - 20;
                 const scale = containerWidth / page.getViewport({ scale: 1 }).width;
                 const viewport = page.getViewport({ scale: scale });
 
@@ -535,7 +758,7 @@
                 page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
                     pageIsRendering = false;
                     if (pageNumPending !== null) { renderPdfPage(pageNumPending); pageNumPending = null; }
-                    
+
                     progressBar.style.width = Math.round((pageNum / pdfDoc.numPages) * 100) + '%';
                     reelCounter.innerText = `Pagină ${pageNum} / ${pdfDoc.numPages}`;
                 });
@@ -550,7 +773,7 @@
             }
 
             isAnimating = true;
-            const duration = 300; 
+            const duration = 300;
 
             readerContainer.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
             readerContainer.style.transform = direction === 'next' ? 'translateY(-100vh)' : 'translateY(100vh)';
@@ -558,11 +781,11 @@
             await new Promise(resolve => setTimeout(resolve, duration));
 
             if (currentMode === 'epub') {
-                if (direction === 'next') await rendition.next(); 
+                if (direction === 'next') await rendition.next();
                 else await rendition.prev();
             } else if (currentMode === 'pdf') {
                 if (direction === 'next') pageNum++; else pageNum--;
-                if(pageIsRendering) { pageNumPending = pageNum; } else { renderPdfPage(pageNum); }
+                if (pageIsRendering) { pageNumPending = pageNum; } else { renderPdfPage(pageNum); }
             }
 
             readerContainer.style.transition = 'none';
@@ -587,25 +810,26 @@
 
         // --- BUTOANE UI ---
         document.getElementById('btn-close').onclick = () => {
-            if (book) book.destroy(); 
+            if (book) book.destroy();
             currentMode = null;
             readerContainer.style.display = 'none';
             topUI.style.display = 'none';
             reelCounter.style.display = 'none'; // Ascundem și counter-ul
             uploadScreen.style.display = 'flex';
-            fileUpload.value = ''; 
+            fileUpload.value = '';
             onlineResults.innerHTML = '';
             libSearchInput.value = '';
             bookSearchInput.value = '';
             bookSearchResults.innerHTML = '';
         };
-        
+
         btnToc.onclick = () => { tocModal.style.bottom = "0"; };
         document.getElementById('btn-close-toc').onclick = () => { tocModal.style.bottom = "-100%"; };
-        
+
         btnSearch.onclick = () => { searchModal.style.bottom = "0"; };
         document.getElementById('btn-close-search').onclick = () => { searchModal.style.bottom = "-100%"; };
 
     </script>
 </body>
+
 </html>
