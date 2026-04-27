@@ -54,6 +54,26 @@
             font-weight: 700; cursor: pointer; backdrop-filter: blur(5px); flex-grow: 1; text-align: center;
         }
 
+        /* --- NOU: Indicatorul de Reel/Pagină --- */
+        #reel-counter {
+            position: absolute;
+            bottom: 25px; /* Stă perfect deasupra zonei bannerului tău */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 35;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* Ascuns până se încarcă cartea */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
         #upload-screen { 
             display: flex; flex-direction: column; align-items: center; gap: 15px; 
             z-index: 10; text-align: center; padding: 20px; width: 100%; max-width: 400px;
@@ -151,6 +171,8 @@
             </div>
         </div>
 
+        <div id="reel-counter" title="Apasă pentru a sări">Se calculează...</div>
+
         <div id="toc-modal" class="modal-bottom">
             <div class="modal-header">
                 <h3 style="margin:0;">Cuprins</h3>
@@ -185,6 +207,7 @@
         const pdfViewer = document.getElementById('pdf-viewer');
         const topUI = document.getElementById('top-ui');
         const progressBar = document.getElementById('progress-bar');
+        const reelCounter = document.getElementById('reel-counter'); // Am extras referința
         
         const btnToc = document.getElementById('btn-toc');
         const btnSearch = document.getElementById('btn-search');
@@ -346,16 +369,22 @@
             if (!file) return;
 
             const reader = new FileReader();
-            if (file.name.toLowerCase().endsWith('.epub')) {
+            const fileName = file.name.toLowerCase();
+
+            if (fileName.endsWith('.epub')) {
                 currentMode = 'epub';
                 reader.onload = (event) => initEpubMode(event.target.result);
                 reader.readAsArrayBuffer(file);
-            } else if (file.name.toLowerCase().endsWith('.pdf')) {
+            } else if (fileName.endsWith('.pdf')) {
                 currentMode = 'pdf';
                 reader.onload = (event) => initPdfMode(new Uint8Array(event.target.result));
                 reader.readAsArrayBuffer(file);
+            } else if (fileName.endsWith('.mobi') || fileName.endsWith('.azw3')) {
+                alert("Formatul Kindle (.mobi / .azw3) este închis de Amazon.\n\nPentru a-l citi aici ca pe Instagram Reels, folosește un convertor gratuit pe internet (caută 'mobi to epub') pentru a-l face .epub, apoi încarcă-l!");
+                fileUpload.value = '';
             } else {
                 alert("Format nesuportat. Te rog încarcă un fișier .epub sau .pdf");
+                fileUpload.value = '';
             }
         });
 
@@ -363,26 +392,57 @@
             uploadScreen.style.display = 'none';
             readerContainer.style.display = 'block';
             topUI.style.display = 'flex';
+            reelCounter.style.display = 'block'; // Afișăm butonul nostru
             
-            // Arătăm butoanele de Capitole și Căutare doar dacă citim un EPUB
             btnToc.style.display = isEpub ? 'block' : 'none';
             btnSearch.style.display = isEpub ? 'block' : 'none';
             
             progressBar.style.width = '0%';
+            reelCounter.innerText = "Se calculează...";
         }
 
+        // --- LOGICA PENTRU AFIȘAREA NUMĂRULUI ---
         function updateEpubProgress() {
             if (book && book.locations && book.locations.length > 0) {
                 const currentLocation = rendition.currentLocation();
                 if (currentLocation && currentLocation.start) {
                     const pct = book.locations.percentageFromCfi(currentLocation.start.cfi);
                     progressBar.style.width = Math.round(pct * 100) + '%';
+
+                    // Actualizăm textul butonului
+                    const currentLoc = book.locations.locationFromCfi(currentLocation.start.cfi);
+                    const totalLocs = book.locations.length();
+                    reelCounter.innerText = `Reel ${currentLoc} / ${totalLocs}`;
                 }
             }
         }
 
+        // --- LOGICA DE "SĂRIT" (JUMP) LA CLICK ---
+        reelCounter.onclick = () => {
+            let maxVal = currentMode === 'epub' ? (book.locations ? book.locations.length() : 0) : pdfDoc.numPages;
+            if (maxVal === 0) return; // Încă se calculează
+
+            let target = prompt(`La ce număr vrei să sari? (1 - ${maxVal})`);
+            
+            if (target !== null && target.trim() !== "" && !isNaN(target)) {
+                target = parseInt(target);
+                if (target >= 1 && target <= maxVal) {
+                    if (currentMode === 'epub') {
+                        // Extragem CFI-ul invizibil asociat acelui număr și ne teleportăm
+                        const targetCfi = book.locations.cfiFromLocation(target);
+                        rendition.display(targetCfi);
+                    } else if (currentMode === 'pdf') {
+                        pageNum = target;
+                        renderPdfPage(pageNum);
+                    }
+                } else {
+                    alert(`Te rog introdu un număr între 1 și ${maxVal}`);
+                }
+            }
+        };
+
         function initEpubMode(bookData) {
-            showReaderUI(true); // true = este EPUB
+            showReaderUI(true); 
             epubViewer.style.display = 'block';
             pdfViewer.style.display = 'none';
 
@@ -451,7 +511,7 @@
         }
 
         function initPdfMode(typedarray) {
-            showReaderUI(false); // false = este PDF, ascundem butoanele de capitole și căutare internă
+            showReaderUI(false); 
             epubViewer.style.display = 'none';
             pdfViewer.style.display = 'flex';
 
@@ -475,7 +535,9 @@
                 page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
                     pageIsRendering = false;
                     if (pageNumPending !== null) { renderPdfPage(pageNumPending); pageNumPending = null; }
+                    
                     progressBar.style.width = Math.round((pageNum / pdfDoc.numPages) * 100) + '%';
+                    reelCounter.innerText = `Pagină ${pageNum} / ${pdfDoc.numPages}`;
                 });
             });
         }
@@ -529,6 +591,7 @@
             currentMode = null;
             readerContainer.style.display = 'none';
             topUI.style.display = 'none';
+            reelCounter.style.display = 'none'; // Ascundem și counter-ul
             uploadScreen.style.display = 'flex';
             fileUpload.value = ''; 
             onlineResults.innerHTML = '';
