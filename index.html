@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Universal Library - Reels Style</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Reels Reader">
+
+    <meta name="theme-color" content="#FDF6E3">
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #FDF6E3;
+            --text-color: #314046;
+            --bg-behind: #E9E1D3;
+            --accent-color: #FF9F1C;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100dvh;
+            /* <-- AICI: schimbat din vh in dvh */
+            width: 100%;
+            background-color: var(--bg-behind);
+            color: var(--text-color);
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            /* <-- AICI: schimbat din vh in dvh */
+            width: 100vw;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #top-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 30;
+            display: none;
+            flex-direction: column;
+        }
+
+        #progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        #nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 10px;
+            gap: 10px;
+        }
+
+        .ui-btn {
+            background: rgba(0, 0, 0, 0.08);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            color: var(--text-color);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            flex-grow: 1;
+        }
+
+        #upload-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        .upload-box {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: 8px;
+            color: var(--text-color);
+            border: 2px solid #ccc;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .search-box input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .search-box button {
+            padding: 10px 15px;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #online-results {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 8px;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #online-results li {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #online-results li:hover {
+            background: #f9f9f9;
+        }
+
+        #online-results li small {
+            display: block;
+            color: #777;
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #reader-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            background-color: var(--bg-color);
+            transform: translateY(0);
+        }
+
+        #epub-viewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+        }
+
+        /* Setări PDF: Adăugăm spațiul de jos pentru banner-ul tiiny.host */
+        #pdf-viewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: #525659;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 60px;
+            padding-bottom: 120px;
+            /* <-- Spațiu de siguranță pentru banner */
+            box-sizing: border-box;
+            /* Previne mărirea div-ului */
+        }
+
+        #pdf-canvas {
+            max-width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-bottom {
+            position: absolute;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 75vh;
+            background-color: var(--bg-color);
+            z-index: 40;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .modal-list li {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        /* --- RESPONSIVE DESIGN: Reguli speciale pentru ecrane mici (iPhone SE) --- */
+        @media (max-width: 400px) {
+            .ui-btn {
+                padding: 6px 8px;
+                font-size: 13px;
+            }
+
+            #nav-buttons {
+                gap: 5px;
+                padding: 10px 5px;
+            }
+
+            .upload-box {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .search-box button {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-container">
+        <div id="upload-screen">
+            <h2 style="margin-bottom: 5px;">Biblioteca Ta</h2>
+
+            <div class="upload-box">
+                <h4>1. Încarcă din telefon</h4>
+                <input type="file" id="file-upload" accept=".epub, .pdf" />
+            </div>
+
+            <h3 style="margin: 10px 0;">SAU</h3>
+
+            <div class="upload-box">
+                <h4 style="margin-top: 0;">2. Caută gratuit (Domeniu Public)</h4>
+                <div class="search-box">
+                    <input type="text" id="lib-search-input" placeholder="Titlu (ex: Dracula)...">
+                    <button id="lib-search-btn">Caută</button>
+                </div>
+                <ul id="online-results"></ul>
+            </div>
+        </div>
+
+        <div id="loading-overlay">
+            <h3 id="loading-text">Se descarcă...</h3>
+        </div>
+
+        <div id="top-ui">
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="nav-buttons">
+                <button class="ui-btn" id="btn-toc" style="display:none;">☰ Capitole</button>
+                <button class="ui-btn" id="btn-close">✕ Închide</button>
+            </div>
+        </div>
+
+        <div id="toc-modal" class="modal-bottom">
+            <div class="modal-header">
+                <h3 style="margin:0;">Cuprins</h3>
+                <button class="ui-btn" style="flex-grow:0;" id="btn-close-toc">Închide</button>
+            </div>
+            <ul id="toc-list" class="modal-list"></ul>
+        </div>
+
+        <div id="reader-container">
+            <div id="epub-viewer"></div>
+            <div id="pdf-viewer" style="display: none;"><canvas id="pdf-canvas"></canvas></div>
+        </div>
+    </div>
+
+    <script>
+        const fileUpload = document.getElementById('file-upload');
+        const uploadScreen = document.getElementById('upload-screen');
+        const readerContainer = document.getElementById('reader-container');
+        const epubViewer = document.getElementById('epub-viewer');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const topUI = document.getElementById('top-ui');
+        const progressBar = document.getElementById('progress-bar');
+        const btnToc = document.getElementById('btn-toc');
+        const tocModal = document.getElementById('toc-modal');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        const libSearchInput = document.getElementById('lib-search-input');
+        const libSearchBtn = document.getElementById('lib-search-btn');
+        const onlineResults = document.getElementById('online-results');
+
+        let currentMode = null;
+        let isAnimating = false;
+
+        let book, rendition;
+        let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumPending = null;
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        function handleSwipeAction(startY, endY) {
+            const swipeDistance = startY - endY;
+            if (swipeDistance > 50) turnPageWithAnimation('next');
+            else if (swipeDistance < -50) turnPageWithAnimation('prev');
+        }
+
+        libSearchBtn.onclick = async () => {
+            const query = libSearchInput.value.trim();
+            if (!query) return;
+
+            onlineResults.innerHTML = '<li><i>Se caută în biblioteca Gutenberg...</i></li>';
+
+            try {
+                const res = await fetch(`https://gutendex.com/books/?search=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                onlineResults.innerHTML = '';
+
+                if (data.results.length === 0) {
+                    onlineResults.innerHTML = '<li>Nu am găsit nicio carte cu acest nume.</li>';
+                    return;
+                }
+
+                const booksWithEpub = data.results.filter(b => b.formats['application/epub+zip']);
+                if (booksWithEpub.length === 0) {
+                    onlineResults.innerHTML = '<li>Am găsit rezultate, dar niciunul în format EPUB.</li>';
+                    return;
+                }
+
+                booksWithEpub.forEach(b => {
+                    const epubUrl = b.formats['application/epub+zip'];
+                    const li = document.createElement('li');
+                    const authors = b.authors.map(a => a.name).join(', ');
+
+                    li.innerHTML = `<strong>${b.title}</strong><small>${authors}</small>`;
+                    li.onclick = () => downloadOnlineBook(epubUrl, b.title);
+                    onlineResults.appendChild(li);
+                });
+
+            } catch (err) {
+                onlineResults.innerHTML = '<li>A apărut o eroare de conexiune.</li>';
+            }
+        };
+
+        libSearchInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") { event.preventDefault(); libSearchBtn.click(); }
+        });
+
+        async function downloadOnlineBook(url, title) {
+            uploadScreen.style.display = 'none';
+            loadingOverlay.style.display = 'flex';
+
+            const loadingText = document.getElementById('loading-text');
+            loadingText.innerHTML = `Se descarcă "${title}"...`;
+
+            try {
+                const proxyUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+
+                if (!response.ok) throw new Error("Proxy-ul a cedat din cauza mărimii fișierului.");
+
+                const arrayBuffer = await response.arrayBuffer();
+                currentMode = 'epub';
+                loadingOverlay.style.display = 'none';
+
+                initEpubMode(arrayBuffer);
+
+            } catch (error) {
+                console.warn("Descărcarea automată a eșuat:", error);
+                loadingText.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <h3 style="color: var(--text-color); margin-bottom: 10px;">Fișierul este prea mare pentru descărcare automată.</h3>
+                        <p style="margin-bottom: 25px; font-size: 16px;">O poți descărca manual apăsând butonul de mai jos:</p>
+                        <a href="${url}" target="_blank" style="display:inline-block; padding: 12px 25px; background: var(--text-color); color: var(--bg-color); text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 25px;">📥 Descarcă "${title}"</a>
+                        <p style="margin-bottom: 20px; font-size: 14px; color: #555;">După descărcare, folosește opțiunea "Încarcă din telefon".</p>
+                        <button onclick="document.getElementById('loading-overlay').style.display='none'; document.getElementById('upload-screen').style.display='flex';" style="padding: 10px 20px; border: 2px solid var(--text-color); background: transparent; color: var(--text-color); border-radius: 8px; font-weight: bold; cursor: pointer;">Înapoi la meniu</button>
+                    </div>
+                `;
+            }
+        }
+
+        fileUpload.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            if (file.name.toLowerCase().endsWith('.epub')) {
+                currentMode = 'epub';
+                reader.onload = (event) => initEpubMode(event.target.result);
+                reader.readAsArrayBuffer(file);
+            } else if (file.name.toLowerCase().endsWith('.pdf')) {
+                currentMode = 'pdf';
+                reader.onload = (event) => initPdfMode(new Uint8Array(event.target.result));
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert("Format nesuportat. Te rog încarcă un fișier .epub sau .pdf");
+            }
+        });
+
+        function showReaderUI(showTocBtn) {
+            uploadScreen.style.display = 'none';
+            readerContainer.style.display = 'block';
+            topUI.style.display = 'flex';
+            btnToc.style.display = showTocBtn ? 'block' : 'none';
+            progressBar.style.width = '0%';
+        }
+
+        function updateEpubProgress() {
+            if (book && book.locations && book.locations.length > 0) {
+                const currentLocation = rendition.currentLocation();
+                if (currentLocation && currentLocation.start) {
+                    const pct = book.locations.percentageFromCfi(currentLocation.start.cfi);
+                    progressBar.style.width = Math.round(pct * 100) + '%';
+                }
+            }
+        }
+
+        function initEpubMode(bookData) {
+            showReaderUI(true);
+            epubViewer.style.display = 'block';
+            pdfViewer.style.display = 'none';
+
+            book = ePub(bookData);
+            rendition = book.renderTo("epub-viewer", {
+                width: "100%", height: "100%", spread: "none",
+                manager: "continuous", flow: "paginated",
+                allowScriptedContent: true
+            });
+
+            rendition.hooks.content.register(function (contents) {
+                contents.addStylesheet("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap");
+            });
+
+            // --- DETECȚIE ECRAN PENTRU IPHONE SE ---
+            const isSmallScreen = window.innerWidth <= 400;
+            const dynamicFontSize = isSmallScreen ? "21px !important" : "26px !important";
+            const dynamicMarginTop = isSmallScreen ? "5vh !important" : "10vh !important";
+
+            rendition.themes.default({
+                "body": {
+                    "background": "#FDF6E3 !important",
+                    "color": "#314046 !important",
+                    // AM MĂRIT LA 80px ULTIMA VALOARE PENTRU BANNERUL TIINY.HOST
+                    "padding": "80px 20px 80px 20px !important",
+                    "margin": "0 !important"
+                },
+                "p": {
+                    "font-family": "'Nunito', sans-serif !important",
+                    "font-size": dynamicFontSize,
+                    "line-height": "1.6 !important",
+                    "display": "block !important",
+                    "margin-top": dynamicMarginTop,
+                    "margin-bottom": "15vh !important",
+                    "break-after": "column !important",
+                    "page-break-after": "always !important"
+                },
+                "h1, h2, h3": {
+                    "font-family": "'Nunito', sans-serif !important",
+                    "display": "block !important",
+                    "margin-top": "15vh !important",
+                    "margin-bottom": "10vh !important",
+                    "break-after": "column !important"
+                }
+            });
+
+            book.ready.then(() => book.locations.generate(1600)).then(() => updateEpubProgress());
+
+            book.loaded.navigation.then(function (toc) {
+                const tocList = document.getElementById('toc-list');
+                tocList.innerHTML = '';
+                toc.forEach(function (chapter) {
+                    const li = document.createElement('li');
+                    li.textContent = chapter.label;
+                    li.onclick = () => { rendition.display(chapter.href); tocModal.style.bottom = "-100%"; };
+                    tocList.appendChild(li);
+                });
+            });
+
+            rendition.display();
+            rendition.on('relocated', function () { updateEpubProgress(); });
+
+            rendition.on('touchstart', function (event) { touchStartY = event.changedTouches[0].screenY; });
+            rendition.on('touchend', function (event) {
+                touchEndY = event.changedTouches[0].screenY;
+                handleSwipeAction(touchStartY, touchEndY);
+            });
+        }
+
+        function initPdfMode(typedarray) {
+            showReaderUI(false);
+            epubViewer.style.display = 'none';
+            pdfViewer.style.display = 'flex';
+
+            pdfjsLib.getDocument(typedarray).promise.then(pdfDoc_ => {
+                pdfDoc = pdfDoc_;
+                pageNum = 1;
+                renderPdfPage(pageNum);
+            });
+        }
+
+        function renderPdfPage(num) {
+            pageIsRendering = true;
+            pdfDoc.getPage(num).then(page => {
+                const containerWidth = pdfViewer.clientWidth - 20;
+                const scale = containerWidth / page.getViewport({ scale: 1 }).width;
+                const viewport = page.getViewport({ scale: scale });
+
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
+                    pageIsRendering = false;
+                    if (pageNumPending !== null) { renderPdfPage(pageNumPending); pageNumPending = null; }
+                    progressBar.style.width = Math.round((pageNum / pdfDoc.numPages) * 100) + '%';
+                });
+            });
+        }
+
+        async function turnPageWithAnimation(direction) {
+            if (isAnimating) return;
+            if (currentMode === 'pdf') {
+                if (direction === 'next' && pageNum >= pdfDoc.numPages) return;
+                if (direction === 'prev' && pageNum <= 1) return;
+            }
+
+            isAnimating = true;
+            const duration = 300;
+
+            readerContainer.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+            readerContainer.style.transform = direction === 'next' ? 'translateY(-100vh)' : 'translateY(100vh)';
+
+            await new Promise(resolve => setTimeout(resolve, duration));
+
+            if (currentMode === 'epub') {
+                if (direction === 'next') await rendition.next();
+                else await rendition.prev();
+            } else if (currentMode === 'pdf') {
+                if (direction === 'next') pageNum++; else pageNum--;
+                if (pageIsRendering) { pageNumPending = pageNum; } else { renderPdfPage(pageNum); }
+            }
+
+            readerContainer.style.transition = 'none';
+            readerContainer.style.transform = direction === 'next' ? 'translateY(100vh)' : 'translateY(-100vh)';
+            void readerContainer.offsetHeight;
+            readerContainer.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+            readerContainer.style.transform = 'translateY(0)';
+
+            setTimeout(() => { isAnimating = false; }, duration);
+        }
+
+        readerContainer.addEventListener('touchstart', e => { touchStartY = e.changedTouches[0].screenY; });
+        readerContainer.addEventListener('touchend', e => {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipeAction(touchStartY, touchEndY);
+        });
+
+        readerContainer.addEventListener('wheel', e => {
+            if (e.deltaY > 0) turnPageWithAnimation('next');
+            else if (e.deltaY < 0) turnPageWithAnimation('prev');
+        });
+
+        document.getElementById('btn-close').onclick = () => {
+            if (book) book.destroy();
+            currentMode = null;
+            readerContainer.style.display = 'none';
+            topUI.style.display = 'none';
+            uploadScreen.style.display = 'flex';
+            fileUpload.value = '';
+            onlineResults.innerHTML = '';
+            libSearchInput.value = '';
+        };
+        btnToc.onclick = () => { tocModal.style.bottom = "0"; };
+        document.getElementById('btn-close-toc').onclick = () => { tocModal.style.bottom = "-100%"; };
+
+    </script>
+</body>
+
+</html>
