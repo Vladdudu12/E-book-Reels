@@ -620,17 +620,19 @@
 
         // --- LOGICA PENTRU AFIȘAREA NUMĂRULUI ---
         function updateEpubProgress() {
-            if (book && book.locations && book.locations.length > 0) {
+            if (!book || !book.locations) return;
+
+            // Verificăm inteligent cum să extragem totalul, indiferent de versiunea librăriei
+            const totalLocs = typeof book.locations.length === 'function' ? book.locations.length() : (book.locations.total || book.locations.length || 0);
+
+            if (totalLocs > 0) {
                 const currentLocation = rendition.currentLocation();
                 if (currentLocation && currentLocation.start) {
                     const pct = book.locations.percentageFromCfi(currentLocation.start.cfi);
                     progressBar.style.width = Math.round(pct * 100) + '%';
 
-                    // Reparăm eroarea: folosim .total sau .length (fără paranteze)
                     const currentLoc = book.locations.locationFromCfi(currentLocation.start.cfi);
-                    const totalLocs = book.locations.total || book.locations.length;
 
-                    // Ne asigurăm că arată corect chiar și la prima secundă de încărcare
                     if (currentLoc > 0) {
                         reelCounter.innerText = `Reel ${currentLoc} / ${totalLocs}`;
                     } else {
@@ -642,8 +644,14 @@
 
         // --- LOGICA DE "SĂRIT" (JUMP) LA CLICK ---
         reelCounter.onclick = () => {
-            // Reparăm și aici parantezele de la length()
-            let maxVal = currentMode === 'epub' ? (book.locations ? (book.locations.total || book.locations.length) : 0) : pdfDoc.numPages;
+            let maxVal = 0;
+
+            if (currentMode === 'epub' && book && book.locations) {
+                maxVal = typeof book.locations.length === 'function' ? book.locations.length() : (book.locations.total || book.locations.length || 0);
+            } else if (currentMode === 'pdf' && pdfDoc) {
+                maxVal = pdfDoc.numPages;
+            }
+
             if (maxVal === 0) return; // Încă se calculează
 
             let target = prompt(`La ce număr vrei să sari? (1 - ${maxVal})`);
